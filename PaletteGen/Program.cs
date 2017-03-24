@@ -1,13 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Drawing;
 
 namespace PaletteGen
 {
-
 	class Program
 	{
 		static void Main(string[] args)
@@ -16,10 +10,9 @@ namespace PaletteGen
 
 			var processor = new Processor("g:/projects/images");
 
-			processor.MakePalette("g:/projects/images/test1.jpg", 16);
-
 			processor.MakePalettesForFolder(folder, 64);
 
+			Console.WriteLine("Press the any key");
 			Console.ReadLine();
 		}
 	}

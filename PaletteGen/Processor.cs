@@ -71,7 +71,7 @@ namespace PaletteGen
 					if (colors.ContainsKey(pixel)) colors[pixel] += 1;
 					else colors[pixel] = 1;
 
-					if (i > 100)
+					if (i > 1000)
 					{
 						Console.Write(".");
 						i = 0;
@@ -146,13 +146,6 @@ namespace PaletteGen
 
 			bmp.Save($"{m_OutputPath}/{Path.GetFileNameWithoutExtension(path)} - {desiredCount} colors.gif", ImageFormat.Gif);
 		}
-
-		//private string GetFilenameWithoutExt(string path)
-		//{
-		//	var filename = Path.GetFileName(path);
-		//
-		//	return filename.Split('.')[0];
-		//}
 
 		private const int DISTANCE_INTERVAL = 20;
 
