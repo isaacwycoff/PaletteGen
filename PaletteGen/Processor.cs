@@ -1,23 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Drawing;
 using System.Drawing.Imaging;
-using System.Runtime.InteropServices;
 using System.IO;
+using System.Linq;
+using System.Runtime.InteropServices;
+using System.Text;
 
 namespace PaletteGen
 {
 	class Processor
 	{
-		//private Bitmap m_Bitmap;
-
 		private string m_OutputPath;
+		private readonly IPaletteGenerator m_Generator;
 
 		private string[] m_ImageExtensions = new string[]
 		{
+			//".png",
 			".jpg",
 			".jpeg"
 		};
@@ -25,6 +24,8 @@ namespace PaletteGen
 		public Processor(string outputPath)
 		{
 			m_OutputPath = outputPath;
+
+			m_Generator = new PaletteGenerator();
 		}
 
 		public void MakePalettesForFolder(string folder, byte desiredCount)
@@ -35,7 +36,7 @@ namespace PaletteGen
 			{
 				Console.WriteLine(file);
 
-				MakePalette(file, desiredCount);
+				GenerateAndSavePalette(file, desiredCount);
 			}
 		}
 
@@ -84,17 +85,17 @@ namespace PaletteGen
 			return colors;
 		}
 
-		private int ColorDistance(Color color1, Color color2)
-		{
-			return 
-			Math.Abs(color1.R - color2.R) +
-			Math.Abs(color1.G - color2.G) +
-			Math.Abs(color1.B - color2.B);
-		}
+//		private int ColorDistance(Color color1, Color color2)
+//		{
+//			return 
+//			Math.Abs(color1.R - color2.R) +
+//			Math.Abs(color1.G - color2.G) +
+//			Math.Abs(color1.B - color2.B);
+//		}
 
 		private const byte MAX_COLORS = 0xff;
 		
-		public void MakePalette(string path, byte desiredCount)
+		public void GenerateAndSavePalette(string path, byte desiredCount)
 		{
 			Dictionary<Color, int> colors;
 
@@ -115,11 +116,14 @@ namespace PaletteGen
 
 			if (desiredCount > MAX_COLORS) desiredCount = MAX_COLORS;
 
-			var minDistance = 20;
+			var candidates = m_Generator.GeneratePalette(colors, desiredCount);
 
-			var colorList = colors.ToList().OrderByDescending(kv => kv.Value).Select(kv => kv.Key);
+			//var minDistance = 20;
+			//
+			//var colorList = colors.ToList().OrderByDescending(kv => kv.Value).Select(kv => kv.Key);
+			//
+			//var candidates = GetCandidates(colorList, minDistance, desiredCount);
 
-			var candidates = GetCandidates(colorList, minDistance, desiredCount);
 
 			Bitmap bmp = new Bitmap(16, 16, PixelFormat.Format8bppIndexed);
 
@@ -144,48 +148,74 @@ namespace PaletteGen
 
 			bmp.Palette = palette;
 
-			bmp.Save($"{m_OutputPath}/{Path.GetFileNameWithoutExtension(path)} - {desiredCount} colors.gif", ImageFormat.Gif);
+			var filename = Path.GetFileNameWithoutExtension(path);
+
+			bmp.Save($"{m_OutputPath}/{filename} - {desiredCount} colors.gif", ImageFormat.Gif);
+
+			SaveAsepritePalette($"{m_OutputPath}/{filename}.gpl", candidates, filename);
 		}
 
-		private const int DISTANCE_INTERVAL = 20;
+//		private const int DISTANCE_INTERVAL = 20;
+//
+//		public List<Color> GetCandidates(IEnumerable<Color> colorList, int minDistance, int desiredCount)
+//		{
+//			var candidates = new List<Color>();
+//
+//			foreach (var color in colorList)
+//			{
+//				if (IsDistinctish(color, candidates, minDistance))
+//				{
+//					candidates.Add(color);
+//				}
+//			}
+//
+//			Console.WriteLine($"Distinct candidates: {candidates.Count}");
+//
+//
+//			if (candidates.Count() < desiredCount)
+//			{
+//				var deficit = desiredCount - candidates.Count();
+//
+//				var excluded = colorList.Where(color => !candidates.Contains(color));
+//
+//				candidates.AddRange(colorList.Take(deficit));
+//
+//				return candidates;
+//			}
+//
+//			return GetCandidates(candidates, minDistance + DISTANCE_INTERVAL, desiredCount);
+//		}
 
-		public List<Color> GetCandidates(IEnumerable<Color> colorList, int minDistance, int desiredCount)
+//		private bool IsDistinctish(Color color, List<Color> others, int minDistance)
+//		{
+//			foreach (var other in others)
+//			{
+//				var distance = ColorDistance(color, other);
+//				if (distance < minDistance) return false;
+//			}
+//			return true;
+//		}
+
+		private void SaveAsepritePalette(string path, IEnumerable<Color> colors, string name)
 		{
-			var candidates = new List<Color>();
+			var builder = new StringBuilder();
 
-			foreach (var color in colorList)
+			builder.Append($"{name}\n");
+			builder.Append($"#\n");
+			builder.Append($"# by PaletteGen\n");
+			builder.Append($"#\n");
+			builder.Append($"#\n");
+
+			foreach(var color in colors)
 			{
-				if (IsDistinctish(color, candidates, minDistance))
-				{
-					candidates.Add(color);
-				}
+				var red = color.R.ToString().PadLeft(3);
+				var green = color.G.ToString().PadLeft(3);
+				var blue = color.B.ToString().PadLeft(3);
+
+				builder.Append($"{red} {green} {blue} Untitled\n");
 			}
 
-			Console.WriteLine($"Distinct candidates: {candidates.Count}");
-
-
-			if (candidates.Count() < desiredCount)
-			{
-				var deficit = desiredCount - candidates.Count();
-
-				var excluded = colorList.Where(color => !candidates.Contains(color));
-
-				candidates.AddRange(colorList.Take(deficit));
-
-				return candidates;
-			}
-
-			return GetCandidates(candidates, minDistance + DISTANCE_INTERVAL, desiredCount);
-		}
-
-		private bool IsDistinctish(Color color, List<Color> others, int minDistance)
-		{
-			foreach (var other in others)
-			{
-				var distance = ColorDistance(color, other);
-				if (distance < minDistance) return false;
-			}
-			return true;
+			File.WriteAllText(path, builder.ToString());
 		}
 	}
 }

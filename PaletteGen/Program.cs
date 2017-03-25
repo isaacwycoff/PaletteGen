@@ -6,9 +6,9 @@ namespace PaletteGen
 	{
 		static void Main(string[] args)
 		{
-			var folder = "G:/Dropbox/Programming/SylvanSneakerAssets/Sylvan-Sneaker-Assets/Reference";
+			var folder = "G:/projects/PaletteSources";
 
-			var processor = new Processor("g:/projects/images");
+			var processor = new Processor("g:/projects/PaletteSources/Palettes");
 
 			processor.MakePalettesForFolder(folder, 64);
 
