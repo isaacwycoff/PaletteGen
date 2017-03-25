@@ -44,7 +44,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="PaletteGenerator.cs" />
+    <Compile Include="Generators\PaletteGenerator.cs" />
+    <Compile Include="Generators\ShadedGenerator.cs" />
     <Compile Include="Processor.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

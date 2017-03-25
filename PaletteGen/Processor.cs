@@ -1,4 +1,5 @@
-﻿using System;
+﻿using PaletteGen.Generators;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
@@ -26,6 +27,7 @@ namespace PaletteGen
 			m_OutputPath = outputPath;
 
 			m_Generator = new PaletteGenerator();
+			//m_Generator = new ShadedGenerator();
 		}
 
 		public void MakePalettesForFolder(string folder, byte desiredCount)

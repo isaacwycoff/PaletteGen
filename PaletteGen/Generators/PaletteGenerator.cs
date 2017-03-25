@@ -2,17 +2,15 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace PaletteGen
+namespace PaletteGen.Generators
 {
 	public interface IPaletteGenerator
 	{
 		List<Color> GeneratePalette(Dictionary<Color, int> colors, int desiredCount);
 	}
 
-	class PaletteGenerator : IPaletteGenerator
+	internal class PaletteGenerator : IPaletteGenerator
 	{
 		public List<Color> GeneratePalette(Dictionary<Color, int> colors, int desiredCount)
 		{
@@ -27,7 +25,7 @@ namespace PaletteGen
 
 		private const int DISTANCE_INTERVAL = 20;
 
-		public List<Color> GetCandidates(IEnumerable<Color> colorList, int minDistance, int desiredCount)
+		private List<Color> GetCandidates(IEnumerable<Color> colorList, int minDistance, int desiredCount)
 		{
 			var candidates = new List<Color>();
 
@@ -42,7 +40,7 @@ namespace PaletteGen
 			Console.WriteLine($"Distinct candidates: {candidates.Count}");
 
 
-			if (candidates.Count() < desiredCount)
+			if (candidates.Count() <= desiredCount)
 			{
 				var deficit = desiredCount - candidates.Count();
 
