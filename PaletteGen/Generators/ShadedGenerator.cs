@@ -7,6 +7,43 @@ namespace PaletteGen.Generators
 {
 	internal class ShadedGenerator : IPaletteGenerator
 	{
+		private class NormalizedColor
+		{
+
+		}
+
+		private Color NormalizeColor(Color color)
+		{
+			byte red = 0x0;
+			byte green = 0x0;
+			byte blue = 0x0;
+
+			if(color.R == 0x0 && color.G == 0x0 && color.B == 0)
+			{
+
+			}
+			else if(color.R >= color.G && color.R >= color.B)
+			{
+				red = 0xff;
+				green = (byte)((255.0 * color.G) / color.R);
+				blue = (byte)((255.0 * color.B) / color.R);
+			}
+			else if(color.G >= color.R && color.G >= color.B)
+			{
+				red = (byte)((255.0 * color.R) / color.G);
+				green = 0xff;
+				blue = (byte)((255.0 * color.B) / color.G);
+			}
+			else
+			{
+				red = (byte)((255.0 * color.R) / color.B);
+				green = (byte)((255.0 * color.G) / color.B);
+				blue = 0xff;
+			}
+
+			return Color.FromArgb(0xff, red, green, blue);
+		}
+
 		private class ColorRatio
 		{
 			public readonly float RedGreen;
@@ -75,11 +112,13 @@ namespace PaletteGen.Generators
 
 		public List<Color> GeneratePalette(Dictionary<Color, int> colors, int desiredCount)
 		{
-			float threshold = 5;
+			int threshold = 20;
 
 			desiredCount = (desiredCount - 4) / SHADES;
 
 			var colorList = colors.ToList().OrderByDescending(kv => kv.Value).Select(kv => kv.Key);
+
+			colorList = colorList.Select(color => NormalizeColor(color));
 
 			var archetypes = GetCandidates(colorList, threshold, desiredCount);
 
@@ -113,55 +152,91 @@ namespace PaletteGen.Generators
 
 			foreach(var color in archetypes)
 			{
-				for(int i = 1; i <= SHADES; i++)
+				for(float i = 1; i <= SHADES; i++)
 				{
-					colors.Add(ShadeColor(color, i / SHADES));
+					var shade = ShadeColor(color, i / SHADES);
+					Console.WriteLine($"Shade {i}/{SHADES} = {shade.R} {shade.G} {shade.B}");
+					colors.Add(shade);
 				}
 			}
 
 			return colors;
 		}
 
-		private void AddColorToLookup(Color color, Dictionary<ColorRatio, List<Color>> colorLookup, float threshold)
-		{
-			var trialRatio = new ColorRatio(color);
-
-			foreach(var keyValue in colorLookup)
-			{
-				var existingRatio = keyValue.Key;
-
-				if (trialRatio.IsSimilarTo(existingRatio, threshold))
-				{
-					colorLookup[existingRatio].Add(color);
-					return;
-				}
-			}
-
-			colorLookup[trialRatio] = new List<Color>() { color };
-		}
+		//private void AddColorToLookup(Color color, List<Color> candidates, float threshold)
+		//{
+		//	var trialRatio = new ColorRatio(color);
+		//
+		//	//var normalized = 
+		//
+		//	foreach(var candidate in candidates)
+		//	{
+		//		if (trialRatio.IsSimilarTo(existingRatio, threshold))
+		//		{
+		//			candidates[existingRatio].Add(color);
+		//			return;
+		//		}
+		//	}
+		//
+		//	candidates[trialRatio] = new List<Color>() { color };
+		//}
 
 		private const int THRESHOLD_INTERVAL = 20;
-		private IEnumerable<Color> GetCandidates(IEnumerable<Color> colorList, float threshold, int desiredCount)
+		private IEnumerable<Color> GetCandidates(IEnumerable<Color> colorList, int threshold, int desiredCount)
 		{
-			Dictionary<ColorRatio, List<Color>> colorLookup = new Dictionary<ColorRatio, List<Color>>();
+			var candidates = new List<Color>();
+
+			//Dictionary<ColorRatio, List<Color>> colorLookup = new Dictionary<ColorRatio, List<Color>>();
 
 			foreach (var color in colorList)
 			{
-				AddColorToLookup(color, colorLookup, threshold);
+				if (IsDistinctish(color, candidates, threshold))
+				{
+					candidates.Add(color);
+				}
 			}
 
-			Console.WriteLine($"Distinct candidates: {colorLookup.Count}");
+			Console.WriteLine($"Distinct candidates: {candidates.Count}");
 
-			var selectedColors =
-				colorLookup.Keys.Select(ratio => ratio.ToColor());
+			//var selectedColors =
+			//	colorLookup.Keys.Select(ratio => ratio.ToColor());
 
-			if (colorLookup.Count <= desiredCount)
+			if (candidates.Count() <= desiredCount)
 			{
+				var deficit = desiredCount - candidates.Count();
 
-				return selectedColors;
+				var excluded = colorList.Where(color => !candidates.Contains(color));
+
+				candidates.AddRange(colorList.Take(deficit));
+
+				return candidates;
 			}
 
-			return GetCandidates(selectedColors, threshold + THRESHOLD_INTERVAL, desiredCount);
+			//if (colorLookup.Count <= desiredCount)
+			//{
+			//
+			//	return selectedColors;
+			//}
+
+			return GetCandidates(candidates, threshold + THRESHOLD_INTERVAL, desiredCount);
+		}
+
+		private bool IsDistinctish(Color color, List<Color> others, int minDistance)
+		{
+			foreach (var other in others)
+			{
+				var distance = ColorDistance(color, other);
+				if (distance < minDistance) return false;
+			}
+			return true;
+		}
+
+		private int ColorDistance(Color color1, Color color2)
+		{
+			return
+			Math.Abs(color1.R - color2.R) +
+			Math.Abs(color1.G - color2.G) +
+			Math.Abs(color1.B - color2.B);
 		}
 	}
 }
