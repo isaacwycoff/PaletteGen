@@ -2,15 +2,15 @@
 
 namespace PaletteGen
 {
-	class Program
+	static class Program
 	{
 		static void Main(string[] args)
 		{
-			var folder = "G:/projects/PaletteSources";
+			var config = new Config();
 
-			var processor = new Processor("g:/projects/PaletteSources/Palettes");
+			var processor = new Processor(config.OutputPath);
 
-			processor.MakePalettesForFolder(folder, 64);
+			processor.MakePalettesForFolder(config.SourceDir, config.DesiredColorCount);
 
 			Console.WriteLine("Press the any key");
 			Console.ReadLine();

@@ -34,6 +34,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="System.configuration" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Xml.Linq" />
@@ -44,6 +45,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AutoConfig.cs" />
+    <Compile Include="Config.cs" />
     <Compile Include="Generators\PaletteGenerator.cs" />
     <Compile Include="Generators\ShadedGenerator.cs" />
     <Compile Include="Processor.cs" />

@@ -12,10 +12,10 @@ namespace PaletteGen
 {
 	class Processor
 	{
-		private string m_OutputPath;
+		private readonly string m_OutputPath;
 		private readonly IPaletteGenerator m_Generator;
 
-		private string[] m_ImageExtensions = new string[]
+		private readonly string[] m_ImageExtensions = new string[]
 		{
 			//".png",
 			".jpg",
@@ -27,10 +27,9 @@ namespace PaletteGen
 			m_OutputPath = outputPath;
 
 			m_Generator = new PaletteGenerator();
-			//m_Generator = new ShadedGenerator();
 		}
 
-		public void MakePalettesForFolder(string folder, byte desiredCount)
+		public void MakePalettesForFolder(string folder, int desiredCount)
 		{
 			var files = Directory.GetFiles(folder).Where(path => FileHasImageExt(path));
 
@@ -89,7 +88,7 @@ namespace PaletteGen
 
 		private const byte MAX_COLORS = 0xff;
 		
-		public void GenerateAndSavePalette(string path, byte desiredCount)
+		public void GenerateAndSavePalette(string path, int desiredCount)
 		{
 			Dictionary<Color, int> colors;
 
@@ -112,34 +111,34 @@ namespace PaletteGen
 
 			var candidates = m_Generator.GeneratePalette(colors, desiredCount);
 
-			Bitmap bmp = new Bitmap(16, 16, PixelFormat.Format8bppIndexed);
-
-			var palette = bmp.Palette;
-
-			var data = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height), ImageLockMode.WriteOnly, PixelFormat.Format8bppIndexed);
-
-			byte[] bytes = new byte[data.Height * data.Stride];
-
-			for(byte i = 0; i < MAX_COLORS; ++i)
+			using (Bitmap bmp = new Bitmap(16, 16, PixelFormat.Format8bppIndexed))
 			{
-				bytes[i] = i;
+				var palette = bmp.Palette;
 
-				if (i < candidates.Count())
-					palette.Entries[i] = candidates[i];
-				else
-					palette.Entries[i] = Color.FromArgb(0, 0, 0);
+				var data = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height), ImageLockMode.WriteOnly, PixelFormat.Format8bppIndexed);
+
+				byte[] bytes = new byte[data.Height * data.Stride];
+
+				for(byte i = 0; i < MAX_COLORS; ++i)
+				{
+					bytes[i] = i;
+
+					if (i < candidates.Count)
+						palette.Entries[i] = candidates[i];
+					else
+						palette.Entries[i] = Color.FromArgb(0, 0, 0);
+				}
+
+				Marshal.Copy(bytes, 0, data.Scan0, bytes.Length);
+				bmp.UnlockBits(data);
+
+				bmp.Palette = palette;
+
+				var filename = Path.GetFileNameWithoutExtension(path);
+
+				bmp.Save($"{m_OutputPath}/{filename} - {desiredCount} colors.gif", ImageFormat.Gif);
+				SaveAsepritePalette($"{m_OutputPath}/{filename}.gpl", candidates, filename);
 			}
-
-			Marshal.Copy(bytes, 0, data.Scan0, bytes.Length);
-			bmp.UnlockBits(data);
-
-			bmp.Palette = palette;
-
-			var filename = Path.GetFileNameWithoutExtension(path);
-
-			bmp.Save($"{m_OutputPath}/{filename} - {desiredCount} colors.gif", ImageFormat.Gif);
-
-			SaveAsepritePalette($"{m_OutputPath}/{filename}.gpl", candidates, filename);
 		}
 
 		private void SaveAsepritePalette(string path, IEnumerable<Color> colors, string name)
