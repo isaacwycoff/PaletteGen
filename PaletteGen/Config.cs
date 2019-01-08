@@ -4,8 +4,8 @@ namespace PaletteGen
 {
 	public class Config : AutoConfig
 	{
-		public readonly string OutputPath;
-		public readonly string SourceDir;
-		public readonly int DesiredColorCount;
+		public string OutputPath { get; set; }
+		public string SourceDir { get; set; }
+		public int DesiredColorCount { get; set; }
 	}
 }
